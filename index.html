@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="blockly-master/blockly_compressed.js"></script>
+  <script src="blockly-master/blocks_compressed.js"></script>
+  <script src="blockly-master/javascript_compressed.js"></script>
+  <script src="blockly-master/msg/js/en.js"></script>
+  <script>
+    const checkPart = (noun, pronounCase) => {
+      const part = noun.slice(1, 5);
+      const term = noun.slice(5, -1);
+      switch (part) {
+        case "NOUN":
+          return term.slice(0, -1);
+          break;
+        case "PRON":
+          return term.split("|")[pronounCase];
+          break;
+        case "ADJE":
+          return term;
+          break;
+        default:
+          break;
+      }
+    }
+    const toThird = verb => {
+      let v = verb;
+      if (/(o|ch|eh|ss)$/.test(v)) {
+        v += "es";
+      } else if (/[bcdfghjklmnpqrstvwxz]y$/.test(v)) {
+        v = v.slice(0, -1) + "ies";
+      } else {
+        v += "s";
+      }
+      console.log(v);
+      return v;
+    }
+    const subject = ["noun", "pronoun"];
+    const complement = ["noun", "adjective"];
+    const be = ["am", "is", "are"];
+
+    Blockly.Blocks['create_d_sentence'] = {
+      init: function() {
+        this.appendValueInput("subject")
+            .setCheck(subject)
+            .appendField("Create a declarative sentence:");
+        this.appendValueInput("verb")
+            .setCheck("verb");
+        this.setInputsInline(true);
+        this.setColour(20);
+        this.setTooltip("");
+        this.setHelpUrl("");
+      }
+    };
+    Blockly.JavaScript['create_d_sentence'] = function(block) {
+      const value_subject = Blockly.JavaScript.valueToCode(block, 'subject', Blockly.JavaScript.ORDER_ATOMIC);
+      const value_verb = Blockly.JavaScript.valueToCode(block, 'verb', Blockly.JavaScript.ORDER_ATOMIC);
+      const subj = checkPart(value_subject, 0);
+      const subject_verb = be[parseInt(value_subject.slice(-2, -1))];
+      let verb = value_verb.slice(1, -1);
+      if (verb.startsWith("be")) {
+        verb = subject_verb + verb.slice(2);
+      }
+      else {
+        const words = verb.split(" ");
+        words[0] = (subject_verb == "is" ? toThird(words[0]) : words[0]);
+        verb = words.join(" ");
+      }
+      const code = subj + " " + verb + ".";
+      return code.charAt(0).toUpperCase() + code.slice(1);
+    };
+  </script>
+</head>
+<body>
+  <div id="blocklyDiv" style="height: 80vh; width: 80vw;"></div>
+  <xml id="toolbox" style="display: none">
+    <block type="create_d_sentence"></block>
+  </xml>
+  <button id="showCode">表示</button>
+  <pre id='jsCode'></pre>
+  <script>
+    const toolbox = document.getElementById("toolbox");
+    const createBlock = word => {
+      const block = document.createElement("block");
+      block.setAttribute("type", word);
+      toolbox.appendChild(block);
+    };
+
+    const createVerbC = word => {
+      Blockly.Blocks[word] = {
+        init: function() {
+          this.appendValueInput("C").setCheck(complement).appendField(word);
+          this.setOutput(true, "verb");
+          this.setColour(260);
+          this.setTooltip("");
+          this.setHelpUrl("");
+        }
+      };
+      Blockly.JavaScript[word] = function(block) {
+        const value_c = Blockly.JavaScript.valueToCode(block, 'C', Blockly.JavaScript.ORDER_ATOMIC);
+        const comp = checkPart(value_c, 2);
+        const code = `${word} ${comp}`;
+        return [code, Blockly.JavaScript.ORDER_NONE];
+      };
+      createBlock(word);
+    };
+
+    const createVerbOO = word => {
+      Blockly.Blocks[word] = {
+        init: function() {
+          this.appendValueInput("O1").setCheck("noun").appendField(word);
+          this.appendValueInput("O2").setCheck("noun");
+          this.setInputsInline(true);
+          this.setOutput(true, "verb");
+          this.setColour(260);
+          this.setTooltip("");
+          this.setHelpUrl("");
+        }
+      };
+      Blockly.JavaScript[word] = function(block) {
+        const value_o1 = Blockly.JavaScript.valueToCode(block, 'O1', Blockly.JavaScript.ORDER_ATOMIC);
+        const value_o2 = Blockly.JavaScript.valueToCode(block, 'O2', Blockly.JavaScript.ORDER_ATOMIC);
+        const object1 = checkPart(value_o1, 2);
+        const object2 = checkPart(value_o2, 2);
+        const code = `${word} ${object1} ${object2}`;
+        return [code, Blockly.JavaScript.ORDER_NONE];
+      };
+      createBlock(word);
+    };
+
+    const createVerbO = word => {
+      Blockly.Blocks[word] = {
+        init: function() {
+          this.appendValueInput("O").setCheck("noun").appendField(word);
+          this.setOutput(true, "verb");
+          this.setColour(260);
+          this.setTooltip("");
+          this.setHelpUrl("");
+        }
+      };
+      Blockly.JavaScript[word] = function(block) {
+        const value_o = Blockly.JavaScript.valueToCode(block, 'O', Blockly.JavaScript.ORDER_ATOMIC);
+        const object = checkPart(value_o, 2);
+        const code = `${word} ${object}`;
+        return [code, Blockly.JavaScript.ORDER_NONE];
+      };
+      createBlock(word);
+    };
+
+    const createAdjective = word => {
+      Blockly.Blocks[word] = {
+        init: function() {
+          this.appendValueInput("M").setCheck("modifier").appendField(word);
+          this.setOutput(true, "adjective");
+          this.setColour(160);
+          this.setTooltip("");
+          this.setHelpUrl("");
+        }
+      };
+      Blockly.JavaScript[word] = function(block) {
+        const value_m = Blockly.JavaScript.valueToCode(block, 'M', Blockly.JavaScript.ORDER_ATOMIC);
+        const modifier = value_m.slice(1, -1);
+        const code = word + (modifier ? " " + modifier : "");
+        return ["ADJE" + code, Blockly.JavaScript.ORDER_NONE];
+      };
+      createBlock(word);
+    };
+
+    const createNoun = (word, isCountable) => {
+      Blockly.Blocks[word] = {
+        init: function() {
+          this.appendValueInput("M").setCheck("modifier").appendField(word);
+          this.setOutput(true, "noun");
+          this.setColour(120);
+          this.setTooltip("");
+          this.setHelpUrl("");
+        }
+      };
+      Blockly.JavaScript[word] = function(block) {
+        const value_m = Blockly.JavaScript.valueToCode(block, 'M', Blockly.JavaScript.ORDER_ATOMIC);
+        const modifier = value_m.slice(1, -1);
+        const code = word + (modifier ? " " + modifier : "");
+        const article = /^[aeiou]/.test(word) ? "an" : "a";
+        return [`NOUN${isCountable ? article + " " : ""}${code}1`, Blockly.JavaScript.ORDER_NONE];
+      };
+      createBlock(word);
+    };
+    
+    const createPronoun = (nominative, possessive, objective, pPronoun, be) => {
+      Blockly.Blocks[nominative] = {
+        init: function() {
+          this.appendValueInput("M").setCheck("modifier").appendField(nominative);
+          this.setOutput(true, "noun");
+          this.setColour(230);
+          this.setTooltip("");
+          this.setHelpUrl("");
+        }
+      };
+      Blockly.JavaScript[nominative] = function(block) {
+        const value_m = Blockly.JavaScript.valueToCode(block, 'M', Blockly.JavaScript.ORDER_ATOMIC);
+        const modifier = value_m.slice(1, -1);
+        const code = modifier ? " " + modifier : "";
+        return [`PRON${nominative}|${possessive}|${objective}|${pPronoun}|${code}${be}`, Blockly.JavaScript.ORDER_NONE];
+      };
+      createBlock(nominative);
+    };
+
+    createPronoun("I", "my", "me", "mine", 0);
+    createPronoun("you", "your", "you", "yours", 2);
+    createPronoun("he", "his", "him", "his", 1);
+    createVerbC("be");
+    createVerbC("look");
+    createVerbOO("give");
+    createVerbOO("buy");
+    createVerbO("study");
+    createVerbO("teach");
+    createNoun("student", true);
+    createNoun("book", true);
+    createNoun("artist", true);
+    createNoun("math", false);
+    createAdjective("happy");
+    createAdjective("sad");
+
+    const workspace = Blockly.inject('blocklyDiv', {toolbox: document.getElementById('toolbox')});
+    function showCode() {
+      Blockly.JavaScript.INFINITE_LOOP_TRAP = null;
+      const pre = document.getElementById('jsCode');
+      pre.innerHTML = Blockly.JavaScript.workspaceToCode(workspace);
+    }
+
+    document.getElementById('showCode').addEventListener('click', showCode, false);
+  </script>
+</body>
+</html>
